@@ -9,10 +9,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Fake in-memory user store
+# JUST TO TEST THE LOGIN, NOT FOR PROD!!!
 fake_users_db = {
     "admin": {
         "username": "admin",
-        "hashed_password": "$2b$12$H9hekCS5LHXVYF9QXnE7pe7JQ772lXP.ncO14TRskLc4H/dF8xkYq",  # 'admin123'
+        "hashed_password": "admin",
     }
 }
 
@@ -29,7 +30,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
 def verify_password(plain, hashed) -> bool:
-    return pwd_context.verify(plain, hashed)
+    return plain == hashed
 
 
 def hash_password(password: str) -> str:
