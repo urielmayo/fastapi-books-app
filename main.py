@@ -1,4 +1,5 @@
 from fastapi import APIRouter, FastAPI, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from database import get_db
@@ -83,7 +84,21 @@ def delete(book_id: int, db: Session = Depends(get_db)):
     return
 
 
-@protected_router.get("/api/v1/stream")
+@protected_router.get(
+    "/api/v1/stream",
+    response_class=StreamingResponse,
+    summary="Real-time updates via Server-Sent Events (SSE)",
+    description="""
+        This endpoint provides **real-time notifications** using [Server-Sent Events (SSE)](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events).
+        It emits messages whenever a book is created, updated or deleted.
+
+        Response format:
+        - Book created: "Book created: {book title}"
+        - Book updated: "Book updated: {book title}"
+        - Book partially updated: "Book partially updated: {book title}"
+        - Book deleted: "Book deleted: {book title}"
+    """,
+)
 def stream():
     return get_stream()
 
