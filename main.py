@@ -29,7 +29,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
 protected_router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
-@protected_router.post("/api/v1/books/", response_model=Book)
+@protected_router.post("/api/v1/books/", response_model=Book, status_code=201)
 def create(book: BookSchema, db: Session = Depends(get_db)):
     book_id = crud.create_book(db, book)
     broadcast_update(f"Book created: {book.title}")
