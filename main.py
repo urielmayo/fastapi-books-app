@@ -14,7 +14,7 @@ models.Base.metadata.create_all(bind=engine)
 app = FastAPI(title="Books API with SQLAlchemy", version="1.0")
 
 
-@app.post("/login", response_model=Token)
+@app.post("/api/v1/login", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
     user = authenticate_user(form_data.username, form_data.password)
     if not user:
@@ -29,14 +29,14 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
 protected_router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
-@protected_router.post("/books/", response_model=Book)
+@protected_router.post("/api/v1/books/", response_model=Book)
 def create(book: BookSchema, db: Session = Depends(get_db)):
     book_id = crud.create_book(db, book)
     broadcast_update(f"Book created: {book.title}")
     return crud.get_book(db, book_id)
 
 
-@protected_router.get("/books/", response_model=list[Book])
+@protected_router.get("/api/v1/books/", response_model=list[Book])
 def read_books(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=10, gt=0),
@@ -45,26 +45,26 @@ def read_books(
     return crud.get_books(db, skip, limit)
 
 
-@protected_router.get("/books/{book_id}", response_model=Book)
+@protected_router.get("/api/v1/books/{book_id}", response_model=Book)
 def read_book(book_id: int, db: Session = Depends(get_db)):
     return crud.get_book(db, book_id)
 
 
-@protected_router.put("/books/{book_id}", response_model=Book)
+@protected_router.put("/api/v1/books/{book_id}", response_model=Book)
 def update(book_id: int, book: BookSchema, db: Session = Depends(get_db)):
     crud.update_book(db, book_id, book)
     broadcast_update(f"Book updated: {book.title}")
     return crud.get_book(db, book_id)
 
 
-@protected_router.delete("/books/{book_id}", status_code=204)
+@protected_router.delete("/api/v1/books/{book_id}", status_code=204)
 def delete(book_id: int, db: Session = Depends(get_db)):
     crud.delete_book(db, book_id)
     broadcast_update(f"Book deleted ID: {book_id}")
     return
 
 
-@protected_router.get("/stream")
+@protected_router.get("/api/v1/stream")
 def stream():
     return get_stream()
 
