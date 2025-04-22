@@ -2,7 +2,13 @@ from fastapi import APIRouter, FastAPI, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from database import get_db
-from schemas import BookSchema, Book, Token
+from schemas import (
+    BookCreate,
+    BookPartialUpdate,
+    BookRead,
+    BookUpdate,
+    Token,
+)
 from auth import authenticate_user, create_access_token, get_current_user
 import crud
 from sse import get_stream, broadcast_update
@@ -29,14 +35,16 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
 protected_router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
-@protected_router.post("/api/v1/books/", response_model=Book, status_code=201)
-def create(book: BookSchema, db: Session = Depends(get_db)):
+@protected_router.post(
+    "/api/v1/books/", response_model=BookRead, status_code=201
+)
+def create(book: BookCreate, db: Session = Depends(get_db)):
     book_id = crud.create_book(db, book)
     broadcast_update(f"Book created: {book.title}")
     return crud.get_book(db, book_id)
 
 
-@protected_router.get("/api/v1/books/", response_model=list[Book])
+@protected_router.get("/api/v1/books/", response_model=list[BookRead])
 def read_books(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=10, gt=0),
@@ -45,15 +53,26 @@ def read_books(
     return crud.get_books(db, skip, limit)
 
 
-@protected_router.get("/api/v1/books/{book_id}", response_model=Book)
+@protected_router.get("/api/v1/books/{book_id}", response_model=BookRead)
 def read_book(book_id: int, db: Session = Depends(get_db)):
     return crud.get_book(db, book_id)
 
 
-@protected_router.put("/api/v1/books/{book_id}", response_model=Book)
-def update(book_id: int, book: BookSchema, db: Session = Depends(get_db)):
+@protected_router.put("/api/v1/books/{book_id}", response_model=BookRead)
+def update(book_id: int, book: BookUpdate, db: Session = Depends(get_db)):
     crud.update_book(db, book_id, book)
     broadcast_update(f"Book updated: {book.title}")
+    return crud.get_book(db, book_id)
+
+
+@protected_router.patch("/api/v1/books/{book_id}", response_model=BookRead)
+def partial_update(
+    book_id: int,
+    book: BookPartialUpdate,
+    db: Session = Depends(get_db),
+):
+    crud.partial_update_book(db, book_id, book)
+    broadcast_update(f"Book partially updated: {book.title}")
     return crud.get_book(db, book_id)
 
 
