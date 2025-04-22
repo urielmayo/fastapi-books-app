@@ -8,14 +8,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Fake in-memory user store
-# JUST TO TEST THE LOGIN, NOT FOR PROD!!!
-fake_users_db = {
-    "admin": {
-        "username": "admin",
-        "hashed_password": "admin",
-    }
-}
 
 # JWT config
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key")
@@ -29,12 +21,18 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
-def verify_password(plain, hashed) -> bool:
-    return plain == hashed
-
-
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
+
+
+# Fake in-memory user store
+# JUST TO TEST THE LOGIN, NOT FOR PROD!!!
+fake_users_db = {
+    "admin": {
+        "username": "admin",
+        "hashed_password": hash_password("admin"),
+    }
+}
 
 
 def authenticate_user(username: str, password: str):
@@ -44,6 +42,10 @@ def authenticate_user(username: str, password: str):
     if not verify_password(password, user["hashed_password"]):
         return None
     return user
+
+
+def verify_password(plain, hashed) -> bool:
+    return pwd_context.verify(plain, hashed)
 
 
 def create_access_token(data: dict):
